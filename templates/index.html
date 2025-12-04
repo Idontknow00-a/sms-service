@@ -216,13 +216,32 @@
     font-size: 0.9rem; /* Emoji um pouco maior */
 }
 
-.action-btn.clear { 
+/* Versão mais compacta */
+.action-btn.copy-sms { 
     background: #f1f5f9; 
     color: #64748b; 
+    flex: 0 0 auto;
+    width: 32px; /* Menor ainda */
+    min-width: 32px;
+    height: 32px; /* Altura fixa igual à largura */
+    padding: 0;
+    border-radius: 6px;
+    font-size: 1.2rem; /* Emoji maior */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.action-btn.clear:hover {
+.action-btn.copy-sms:hover {
     background: #e2e8f0;
+}
+
+/* Ajuste os outros botões para mesma altura */
+.action-btn:not(.copy-sms), .gender-btn {
+    height: 32px; /* Mesma altura do botão de copiar */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .action-btn.generate { 
@@ -507,15 +526,13 @@
                     </div>
                 </div>
             </div>
-        </div>
-        
 <!-- Data Generator Section -->  
 <div class="section data-section">  
     <div class="action-buttons">  
-        <button class="action-btn clear" onclick="clearData()">Limpar</button>  
-        <button class="gender-btn male active" onclick="setGender('male')" id="maleBtn">Masculino</button>  
-        <button class="gender-btn female" onclick="setGender('female')" id="femaleBtn">Feminino</button>  
-        <button class="action-btn generate" onclick="generateData()">Gerar Dados</button>  
+        <button class="action-btn copy-sms" onclick="copyCurrentSMSNumber()" title="Copiar número atual do SMS">📋</button>  
+        <button class="gender-btn male active" onclick="setGender('male')" id="maleBtn">MAS</button>  
+        <button class="gender-btn female" onclick="setGender('female')" id="femaleBtn">FEM</button>  
+        <button class="action-btn generate" onclick="generateData()">GERAR</button>  
     </div>
             
             <div class="data-field" onclick="copyDataField('firstName')">
@@ -880,51 +897,9 @@
         }
 
         // ================= DATA GENERATOR FUNCTIONS =================
-        const maleNames = ["Abelardo", "Adriano", "Agnaldo", "Alan", "Alberto", "Aldo", "Alex", "Alexandre", "Alfredo", "Alvaro",
-            "Anderson", "Andre", "Antonio", "Ariel", "Augusto", "Aureliano", "Bruno", "Caio", "Cassio",
-            "Cesar", "Cristiano", "Daniel", "Davi", "Diego", "Douglas", "Eduardo", "Elias", "Emilio", "Enzo",
-            "Felipe", "Fernando", "Francisco", "Gabriel", "Gustavo", "Henrique", "Hugo", "Igor", "Ivo", "Jackson",
-            "Jair", "James", "Jander", "Joao", "Jorge", "Jose", "Juan", "Julio", "Junior", "Kaio", "Leonardo",
-            "Leandro", "Luis", "Luciano", "Lucas", "Marcelo", "Marcos", "Mario", "Martin", "Matheus", "Mauricio",
-            "Miguel", "Moises", "Nicolas", "Nilton", "Nivaldo", "Otavio", "Paulo", "Pedro", "Rafael", "Renato", "Ricardo",
-            "Roberto", "Rogerio", "Romulo", "Ronaldo", "Rodrigo", "Samuel", "Sergio", "Silvio", "Thales", "Tiago",
-            "Tobias", "Tomas", "Vagner", "Vitor", "Vinicius", "Wagner", "Wallace", "Washington", "Willian", "Wilson",
-            "Walter", "Ademir", "Adolfo", "Agostinho", "Ailton", "Alcides", "Alfredo", "Altair", "Amadeu", "Americo",
-            "Anselmo", "Antonino", "Arnaldo", "Artur", "Aurelio", "Bento", "Benjamim", "Benicio", "Bernard",
-            "Brendon", "Caetano", "Carlos", "Carmelo", "Cassio", "Celso", "Claudinei", "Claudemir", "Claudio",
-            "Cleo", "Cristiano", "Damiao", "Danilo", "Dario", "Edgard", "Edilson", "Edson", "Efraim", "Eike",
-            "Eliseu", "Emiliano", "Enrico", "Epitacio", "Erico", "Eugenio", "Evaldo", "Evandro", "Everaldo", "Fabiano",
-            "Fabricio", "Fabio", "Feliciano", "Filomeno", "Flavio", "Florencio", "Frederico", "Geraldo", "Gideon",
-            "Gilberto", "Giordano", "Giovani", "Gregorio", "Heitor", "Icaro", "Ilson", "Ismael", "Israel", "Italo",
-            "Jaime", "Joaquim", "Jose Maria", "Josuel", "Joviano", "Luan", "Luiz Felipe", "Marcio", "Marco", "Nelio",
-            "Nestor", "Nilson", "Norberto", "Nuno", "Osmar", "Paulo", "Plinio", "Rubens", "Ruy", "Salomao",
-            "Samir", "Sandro", "Severino", "Sidnei", "Silvano", "Silvio", "Tadeu", "Tarcisio", "Teodoro", "Thiago", "Tomas",
-            "Ulysses", "Urbano", "Valdir", "Valter", "Vicente", "Vladmir", "Waldemar", "Wilmar", "Wladimir"];
-        const femaleNames = ["Abigail", "Adelaide", "Adelia", "Adriana", "Agatha", "Agnes", "Aida", "Aileen", "Aira", "Alana", "Alice", "Aline", "Alzira", "Amalia", "Amanda", "Amelia", "Ana", "Analia", "Andrea", "Andressa", "Angela", "Angelica", "Anita", "Antonia", "Aparecida", "Ariana", "Ariane", "Arlete", "Arya", "Aurora", "Barbara", "Beatriz", "Benedita", "Berenice", "Bernadete", "Bianca", "Bruna", "Brunilda", "Caetana", "Camila", "Carina", "Carla", "Carmem", "Carmo", "Carolina", "Cassia", "Catarina", "Cecilia", "Celina", "Celia", "Clara", "Clarice", "Clarinda", "Claudia", "Clementina", "Cleonice", "Clotilde", "Conceicao", "Constancia", "Cristina", "Dafne", "Dalva", "Daniela", "Daphne", "Dara", "Debora", "Deise", "Denise", "Diana", "Dilma", "Diolinda", "Diva", "Dora", "Doroteia", "Eduarda", "Elaine", "Eliana", "Elisabete", "Elisabeth", "Elisa", "Elisete", "Elizangela", "Elsa", "Elza", "Emanuela", "Emilia", "Emily", "Eneida", "Ercilia", "Erica", "Ermelinda", "Ester", "Esther", "Eunice", "Eva", "Evelyn", "Fabiana", "Fabiola", "Fatima", "Felicia", "Fernanda", "Filomena", "Flavia", "Francisca", "Gabriela", "Gabrielle", "Geralda", "Gertrudes", "Giovanna", "Giselle", "Gloria", "Graca", "Graciela", "Graziella", "Guadalupe", "Helena", "Heloisa", "Henriqueta", "Hilda", "Idalina", "Idalia", "Idalina", "Ieda", "Ileana", "Ilma", "Ilona", "Ines", "Iolanda", "Ione", "Irene", "Iris", "Isabel", "Isabela", "Isis", "Ivana", "Ivone", "Jacinta", "Janaina", "Janete", "Janice", "Jasmin", "Jeane", "Jocasta", "Joceline", "Joana", "Jordana", "Josefa", "Josefina", "Jovita", "Judite", "Julia", "Juliana", "Julieta", "Jurema", "Justina", "Karla", "Karoline", "Katharina", "Katia", "Katrina", "Kelly", "Kim", "Lais", "Lara", "Laura", "Laurinda", "Leandra", "Leila", "Lena", "Leonor", "Leticia", "Lia", "Liana", "Lilian", "Liliana", "Linda", "Lineia", "Livia", "Loren", "Lorena", "Luana", "Lucia", "Luciana", "Luciene", "Lucrecia", "Ludmila", "Luisa", "Luzia", "Madalena", "Magda", "Magnolia", "Maia", "Maira", "Manuela", "Mara", "Marcela", "Marcia", "Marcilia", "Margarida", "Maria", "Mariana", "Marilda", "Marina", "Marisa", "Marlene", "Marta", "Matilde", "Maura", "Mavi", "Maxima", "Mayara", "Maysa", "Melania", "Melinda", "Melissa", "Mercedes", "Milena", "Miriam", "Mirian", "Mirela", "Miriam", "Monica", "Nadia", "Nair", "Nancy", "Nara", "Natividade", "Natalia", "Natasha", "Nazare", "Nela", "Nelia", "Nely", "Nereida", "Neyde", "Neuza", "Nidia", "Nila", "Nilza", "Nina", "Ninfa", "Nisia", "Noemia", "Noemi", "Norma", "Nubia", "Odalicia", "Odete", "Ofelia", "Olga", "Olimpia", "Otilia", "Palmira", "Patricia", "Paula", "Paulina", "Pauline", "Penelope", "Perpetua", "Piedade", "Pilar", "Priscila", "Querina", "Quintina", "Rafaela", "Raquel", "Rebeca", "Regina", "Renata", "Rita", "Roberta", "Rosa", "Rosalina", "Rosana", "Rosangela", "Rosario", "Rosilene", "Rosimeire", "Rubia", "Rute", "Sabrina", "Samanta", "Sandra", "Sara", "Sasha", "Selena", "Selma", "Severina", "Sheila", "Sibila", "Sibila", "Silvana", "Silvia", "Simone", "Sofia", "Solange", "Sonia", "Soraya", "Suellen", "Sulamita", "Suzana", "Tania", "Tassia", "Tatiana", "Telma", "Teresa", "Tereza", "Thereza", "Tiana", "Tina", "Tirza", "Tomasia", "Valeria", "Valesca", "Valquiria", "Vanessa", "Vanda", "Verena", "Veridiana", "Veronica", "Victoria", "Vilma", "Violeta", "Virginia", "Vitoria", "Vivian", "Viviane", "Wanda", "Xenia", "Yara", "Yasmin", "Yeda", "Yolanda", "Yone", "Yvone", "Zaira", "Zelia", "Zenaide", "Zenilda", "Zilda"];
-        const lastNames = ["Abreu", "Albuquerque", "Almeida", "Andrade", "Araujo", "Barbosa", "Barros", "Borges", "Brandao", "Brazil",
-            "Campos", "Carvalho", "Castro", "Chaves", "Clemente", "Costa", "Cruz", "Dias", "Duarte", "Faria",
-            "Fernandes", "Ferreira", "Freitas", "Gama", "Garcia", "Goncalves", "Gomes", "Goncalves", "Guimaraes",
-            "Henrique", "Lima", "Lopes", "Lourenco", "Macedo", "Machado", "Martins", "Melo", "Mesquita", "Miranda",
-            "Moraes", "Moreira", "Mota", "Neto", "Oliveira", "Pereira", "Pinto", "Rezende", "Ribeiro", "Rodrigues",
-            "Romero", "Rosa", "Santos", "Silva", "Silveira", "Siqueira", "Souza", "Teixeira", "Torres", "Valente",
-            "Vargas", "Vieira", "Vila", "Vieira", "Araujo", "Alves", "Bezerra", "Campos", "Cardoso", "Castro",
-            "Cruz", "Dantas", "Falcao", "Ferreira", "Freitas", "Goncalves", "Gomes", "Guimaraes", "Lima", "Lopes",
-            "Melo", "Mendes", "Moraes", "Moreira", "Mota", "Oliveira", "Pacheco", "Pereira", "Pinto", "Reis",
-            "Ribeiro", "Rodrigues", "Santos", "Silva", "Silveira", "Siqueira", "Souza", "Teixeira", "Torres", "Valente",
-            "Vargas", "Vieira", "Vila", "Viana", "Antunes", "Araujo", "Albuquerque", "Almeida", "Barbosa", "Barros",
-            "Brandao", "Brazil", "Campos", "Carvalho", "Castro", "Chaves", "Clemente", "Costa", "Cruz", "Dias",
-            "Duarte", "Faria", "Fernandes", "Ferreira", "Freitas", "Gama", "Garcia", "Goncalves", "Gomes", "Guimaraes",
-            "Henrique", "Lima", "Lopes", "Lourenco", "Macedo", "Machado", "Martins", "Melo", "Mesquita", "Miranda",
-            "Moraes", "Moreira", "Mota", "Neto", "Oliveira", "Pereira", "Pinto", "Rezende", "Ribeiro", "Rodrigues",
-            "Romero", "Rosa", "Santos", "Silva", "Silveira", "Siqueira", "Souza", "Teixeira", "Torres", "Valente",
-            "Vargas", "Vieira", "Vila", "Vieira", "Araujo", "Alves", "Bezerra", "Campos", "Cardoso", "Castro",
-            "Cruz", "Dantas", "Falcao", "Ferreira", "Freitas", "Goncalves", "Gomes", "Guimaraes", "Lima", "Lopes",
-            "Melo", "Mendes", "Moraes", "Moreira", "Mota", "Oliveira", "Pacheco", "Pereira", "Pinto", "Reis",
-            "Ribeiro", "Rodrigues", "Santos", "Silva", "Silveira", "Siqueira", "Souza", "Teixeira", "Torres", "Valente",
-            "Vargas", "Vieira", "Vila", "Viana", "Antunes", "Barros", "Carvalho", "Castro", "Cavalcante", "Chaves",
-            "Costa", "Cruz", "Dias", "Duarte", "Ferreira", "Freitas", "Gomes", "Goncalves", "Guimaraes", "Lima",
-            "Lopes", "Machado", "Mendes", "Melo", "Moraes", "Moreira", "Neto", "Oliveira", "Pereira", "Pinto",
-            "Reis", "Ribeiro", "Rodrigues", "Silva", "Silveira", "Siqueira", "Souza", "Teixeira", "Torres", "Valente"];
+        const maleNames = ["Abelardo", "Adriano", "Agnaldo", "Alan"];
+        const femaleNames = ["Abigail", "Adelaide", "Adelia", "Adriana"];
+        const lastNames = ["Abreu", "Albuquerque", "Almeida"];
         
         let currentGender = localStorage.getItem('currentGender') || 'male';
         let currentData = JSON.parse(localStorage.getItem('currentData')) || null;
@@ -1003,7 +978,7 @@
             const alias = parseInt(localStorage.getItem('aliasNumber')) || 1;
             document.getElementById('aliasNumber').value = alias;
             
-            notify('Dados gerados com sucesso!');
+            notify('Sucesso!');
         }
 
         function generateDataOnLoad() {
@@ -1051,7 +1026,7 @@
             }
             
             navigator.clipboard.writeText(text).then(() => {
-                notify('Dado copiado!');
+                notify('Copiado!');
             }).catch(() => {
                 const el = document.createElement('textarea');
                 el.value = text;
@@ -1059,20 +1034,32 @@
                 el.select();
                 document.execCommand('copy');
                 document.body.removeChild(el);
-                notify('Dado copiado!');
+                notify('Copiado!');
             });
         }
         
-        function clearData() {
-            document.getElementById('firstName').value = '';
-            document.getElementById('lastName').value = '';
-            document.getElementById('cpf').value = '';
-            document.getElementById('email').value = '';
-            document.getElementById('birthdate').value = '';
-            currentData = null;
-            localStorage.removeItem('currentData');
-            notify('Dados limpos');
-        }
+        // ================= FUNÇÃO PARA COPIAR NÚMERO DO SMS =================
+function copyCurrentSMSNumber() {
+    if (!smsState.number || smsState.number === 'Obter' || smsState.number === '...' || smsState.number === 'Erro') {
+        notify('Nenhum número SMS disponível', 'error');
+        return;
+    }
+    
+    // Remove o símbolo de preço se existir
+    const cleanNumber = smsState.number.replace(/\$\d+\.\d{4}\s*/, '').trim();
+    
+    navigator.clipboard.writeText(cleanNumber).then(() => {
+        notify(`Núm copiado`);
+    }).catch(() => {
+        const el = document.createElement('textarea');
+        el.value = cleanNumber;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        notify(`Núm copiado`);
+    });
+}
         
         function setAliasNumber() {
             const number = document.getElementById('aliasNumber').value;
