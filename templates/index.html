@@ -19,7 +19,7 @@
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
         }
         
         .section {
@@ -111,6 +111,18 @@
             font-weight: 500; 
         }
         
+        .sms-section .counter {
+            font-size: 0.7rem;
+            color: #4f46e5;
+            font-weight: 600;
+            background: #f5f3ff;
+            padding: 2px 6px;
+            border-radius: 8px;
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+        }
+        
         .sms-section .copy-indicator { 
             position: absolute; 
             top: 8px;
@@ -156,52 +168,9 @@
             animation: none; 
         }
         
-        .sms-stats { 
-            display: flex; 
-            justify-content: space-between; 
-            padding: 8px 15px;
-            background: #f8fafc; 
-            border-top: 1px solid #e2e8f0; 
-            height: 30px;
-        }
-        
-        .sms-stat { 
-            text-align: center; 
-            font-size: 0.7rem;
-            color: #64748b; 
-            display: flex; 
-            flex-direction: row;  
-            align-items: center;
-            gap: 4px;   
-        }
-        
-        .sms-stat span { 
-            font-weight: 700; 
-            color: #4f46e5; 
-            font-size: 0.9rem;
-            margin-bottom: 2px; 
-        }
-        
         /* Data Generator Section */
         .data-section {
             padding: 15px;
-        }
-        
-        .gender-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        
-        .gender-btn {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
         }
         
         .gender-btn.male { 
@@ -225,94 +194,112 @@
         }
         
         .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .action-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .action-btn.clear { 
-            background: #f1f5f9; 
-            color: #64748b; 
-        }
-        
-        .action-btn.generate { 
-            background: #4f46e5; 
-            color: white; 
-        }
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.action-btn, .gender-btn {
+    flex: 1;
+    padding: 6px 2px; /* Versão mais compacta */
+    border: none;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.gender-btn {
+    padding: 6px 2px;
+    font-size: 0.9rem; /* Emoji um pouco maior */
+}
+
+.action-btn.clear { 
+    background: #f1f5f9; 
+    color: #64748b; 
+}
+
+.action-btn.clear:hover {
+    background: #e2e8f0;
+}
+
+.action-btn.generate { 
+    background: #4f46e5; 
+    color: white; 
+}
+
+.action-btn.generate:hover {
+    background: #4338ca;
+}
+
+.gender-btn.male { 
+    background: #e0f2fe; 
+    color: #0369a1; 
+}
+
+.gender-btn.male.active { 
+    background: #0369a1; 
+    color: white; 
+}
+
+.gender-btn.male:hover:not(.active) {
+    background: #bae6fd;
+}
+
+.gender-btn.female { 
+    background: #fce7f3; 
+    color: #db2777; 
+}
+
+.gender-btn.female.active { 
+    background: #db2777; 
+    color: white; 
+}
+
+.gender-btn.female:hover:not(.active) {
+    background: #fbcfe8;
+}
         
         .data-field {
-            margin-bottom: 8px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            overflow: hidden;
-            display: flex;
-        }
-        
-        .data-input {
-            flex: 1;
-            padding: 10px 12px;
-            border: none;
-            font-size: 0.9rem;
-            background: #f8fafc;
-            color: #1e293b;
-        }
-        
-        .data-input:focus {
-            outline: none;
-            background: white;
-        }
-        
-        .copy-btn {
-            padding: 0 15px;
-            background: #4f46e5; /* Cor alterada para roxo */
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-        
-        .copy-btn:hover {
-            background: #4338ca;
-        }
-        
+    margin-bottom: 8px;
+    border: 1px solid #e2e8f0; /* borda igual ao botão limpar */
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #f5f3ff; /* fundo ROXO da sessão GIFTS */
+}
+
+.data-field:hover {
+    border-color: #cbd5e1; /* igual ao hover do limpar */
+    background: #ede9fe; /* roxo levemente mais forte */
+}
+
+.data-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: none;
+    font-size: 0.9rem;
+    background: transparent; /* usa o fundo roxo */
+    color: #64748b; /* texto igual ao botão limpar */
+    cursor: pointer;
+}
+
+.data-input:focus {
+    outline: none;
+    background: #ffffffaa; /* leve destaque no foco */
+}
+
         /* Gift Section */
         .gift-section {
-            background: #f5f3ff; /* Cor alterada para roxo claro */
+            background: #f5f3ff;
             border: 1px solid #ddd6fe;
             border-radius: 8px;
             padding: 12px;
             margin: 10px 0;
-        }
-        
-        .gift-section h3 {
-            font-size: 0.85rem;
-            color: #5b21b6; /* Cor alterada para roxo escuro */
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .gift-count {
-            background: #4f46e5; /* Cor alterada para roxo */
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
         }
         
         .gift-input {
@@ -337,6 +324,7 @@
             border: 1px solid #ddd6fe;
             border-radius: 6px;
             padding: 8px;
+            margin-bottom: 8px;
         }
         
         .gift-item {
@@ -361,6 +349,31 @@
             justify-content: space-between;
             font-size: 0.75rem;
             color: #64748b;
+        }
+        
+        .gift-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .gift-footer-btn {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .gift-count {
+            font-weight: 700;
+            color: #5b21b6;
+            font-size: 0.9rem;
         }
         
         /* Settings Section */
@@ -418,7 +431,7 @@
             position: fixed; 
             top: 15px; 
             right: 15px; 
-            background: #4f46e5; /* Cor alterada para roxo */
+            background: #4f46e5;
             color: white; 
             padding: 8px 14px;
             border-radius: 6px; 
@@ -461,10 +474,6 @@
             .sms-section .value { 
                 font-size: 1.1rem; 
             }
-            
-            .sms-stats {
-                padding: 6px 12px;
-            }
         }
     </style>
 </head>
@@ -480,6 +489,7 @@
                         <div class="price" id="numberPrice"></div>
                     </div>
                     <div class="value empty" id="numberValue">Obter</div>
+                    <div class="counter" id="attempts">0</div>
                     <div class="status">
                         <div class="dot"></div>
                         <span id="numberStatus">Pronto</span>
@@ -490,65 +500,57 @@
                     <div class="copy-indicator" id="codeCopy">✓</div>
                     <div class="label">Código</div>
                     <div class="value empty" id="codeValue">Receber</div>
+                    <div class="counter" id="successes">0</div>
                     <div class="status">
                         <div class="dot"></div>
                         <span id="codeStatus">Aguardando</span>
                     </div>
                 </div>
             </div>
-            
-            <div class="sms-stats">
-                <div class="sms-stat"><span id="attempts">0</span> Tentativas</div>
-                <div class="sms-stat"><span id="successes">0</span> Sucessos</div>
-                <div class="sms-stat"><span>50s</span> Timeout</div>
-            </div>
         </div>
         
-        <!-- Data Generator Section -->
-        <div class="section data-section">
-            <div class="gender-buttons">
-                <button class="gender-btn male active" onclick="setGender('male')" id="maleBtn">Masculino</button>
-                <button class="gender-btn female" onclick="setGender('female')" id="femaleBtn">Feminino</button>
-            </div>
+<!-- Data Generator Section -->  
+<div class="section data-section">  
+    <div class="action-buttons">  
+        <button class="action-btn clear" onclick="clearData()">Limpar</button>  
+        <button class="gender-btn male active" onclick="setGender('male')" id="maleBtn">Masculino</button>  
+        <button class="gender-btn female" onclick="setGender('female')" id="femaleBtn">Feminino</button>  
+        <button class="action-btn generate" onclick="generateData()">Gerar Dados</button>  
+    </div>
             
-            <div class="action-buttons">
-                <button class="action-btn clear" onclick="clearData()">Limpar</button>
-                <button class="action-btn generate" onclick="generateData()">Gerar Dados</button>
-            </div>
-            
-            <div class="data-field">
+            <div class="data-field" onclick="copyDataField('firstName')">
                 <input type="text" class="data-input" id="firstName" readonly placeholder="Nome">
-                <button class="copy-btn" onclick="copyToClipboard('firstName')">Copiar</button>
             </div>
             
-            <div class="data-field">
+            <div class="data-field" onclick="copyDataField('lastName')">
                 <input type="text" class="data-input" id="lastName" readonly placeholder="Sobrenome">
-                <button class="copy-btn" onclick="copyToClipboard('lastName')">Copiar</button>
             </div>
             
-            <div class="data-field">
+            <div class="data-field" onclick="copyDataField('cpf')">
                 <input type="text" class="data-input" id="cpf" readonly placeholder="CPF">
-                <button class="copy-btn" onclick="copyToClipboard('cpf')">Copiar</button>
             </div>
             
-            <div class="data-field">
+            <div class="data-field" onclick="copyDataField('email')">
                 <input type="text" class="data-input" id="email" readonly placeholder="Email">
-                <button class="copy-btn" onclick="copyToClipboard('email')">Copiar</button>
             </div>
             
-            <div class="data-field">
+            <div class="data-field" onclick="copyDataField('birthdate')">
                 <input type="text" class="data-input" id="birthdate" readonly placeholder="Data Nascimento">
-                <button class="copy-btn" onclick="copyToClipboard('birthdate')">Copiar</button>
             </div>
             
             <!-- Gift Section -->
             <div class="gift-section">
-                <h3>Gifts <span class="gift-count" id="giftCount">0</span></h3>
-                <input type="text" class="gift-input" id="giftInput" placeholder="Cole o código do gift aqui (auto-salva)"
-                       oninput="handleGiftInput(event)"
-                       onkeydown="handleGiftKeydown(event)">
+                <input type="text" class="gift-input" id="giftInput" 
+                       placeholder="Cole o código do gift aqui (auto-salva)"
+                       oninput="handleGiftInput(event)">
                 <div class="gift-list" id="giftList">
                     <!-- Gift items will appear here -->
+                </div>
+                
+                <div class="gift-footer">
+                    <button class="gift-footer-btn" onclick="clearAllGifts()" title="Limpar todos os gifts">🗑️</button>
+                    <div class="gift-count" id="giftCount">0</div>
+                    <button class="gift-footer-btn" onclick="copyAllGifts()" title="Copiar todos os gifts">📋</button>
                 </div>
             </div>
             
@@ -581,7 +583,8 @@
             attempts: parseInt(localStorage.getItem('sms_attempts') || '0'),
             successes: parseInt(localStorage.getItem('sms_successes') || '0'),
             loading: false,
-            firstStatusCheck: localStorage.getItem('sms_first_check') === 'true' || false
+            firstStatusCheck: localStorage.getItem('sms_first_check') === 'true' || false,
+            autoCheckInterval: null
         };
 
         function loadSmsState() {
@@ -602,6 +605,11 @@
             
             document.getElementById('attempts').textContent = smsState.attempts;
             document.getElementById('successes').textContent = smsState.successes;
+            
+            // Inicia verificação automática se já tiver número
+            if (smsState.id) {
+                startAutoCodeCheck();
+            }
         }
 
         function saveSmsState() {
@@ -667,6 +675,7 @@
                     
                     smsState.id = '';
                     smsState.code = '';
+                    stopAutoCodeCheck();
                     saveSmsState();
                     
                     notify('Número cancelado (sem SMS)', 'warning');
@@ -676,6 +685,55 @@
                 console.error('Erro ao cancelar número:', error);
             }
             return false;
+        }
+
+        // Função para verificar código automaticamente
+        async function autoCheckCode() {
+            if (!smsState.id || smsState.loading) return;
+            
+            try {
+                const response = await fetch(`/get_status/${smsState.id}`);
+                const data = await response.json();
+                
+                if (data.success && data.has_code && data.code) {
+                    // Código recebido automaticamente!
+                    smsState.code = data.code;
+                    smsState.successes++;
+                    
+                    document.getElementById('codeValue').textContent = smsState.code;
+                    document.getElementById('codeBox').classList.add('active');
+                    document.getElementById('codeStatus').textContent = 'Recebido';
+                    document.querySelector('#codeBox .dot').classList.add('received');
+                    document.getElementById('successes').textContent = smsState.successes;
+                    
+                    saveSmsState();
+                    
+                    // Copia automaticamente
+                    await copy(smsState.code, 'code');
+                    notify(`Código recebido automaticamente: ${smsState.code}`, 'info');
+                    
+                    // Continua verificando para novos códigos
+                    document.getElementById('codeStatus').textContent = 'Aguardando novo...';
+                    smsState.firstStatusCheck = false;
+                }
+            } catch (error) {
+                // Silencia erros no auto-check
+            }
+        }
+
+        function startAutoCodeCheck() {
+            if (smsState.autoCheckInterval) {
+                clearInterval(smsState.autoCheckInterval);
+            }
+            // Verifica a cada 3 segundos
+            smsState.autoCheckInterval = setInterval(autoCheckCode, 3000);
+        }
+
+        function stopAutoCodeCheck() {
+            if (smsState.autoCheckInterval) {
+                clearInterval(smsState.autoCheckInterval);
+                smsState.autoCheckInterval = null;
+            }
         }
 
         async function getNumber() {
@@ -695,7 +753,7 @@
                 if (smsState.id) {
                     try {
                         await fetch(`/cancel_number/${smsState.id}`);
-                        console.log(`Número anterior ${smsState.id} cancelado`);
+                        stopAutoCodeCheck();
                     } catch (e) {
                         console.log('Erro ao cancelar número anterior:', e);
                     }
@@ -723,6 +781,9 @@
                     document.querySelector('#codeBox .dot').classList.remove('received', 'cancelled');
                     
                     saveSmsState();
+                    
+                    // Inicia verificação automática
+                    startAutoCodeCheck();
                     
                     await copy(smsState.number, 'number');
                     notify(`Número: ${smsState.number} ($${smsState.price})`);
@@ -755,7 +816,6 @@
             document.getElementById('codeValue').textContent = '...';
             document.getElementById('codeStatus').textContent = 'Verificando';
             document.getElementById('codeBox').classList.remove('empty');
-            document.getElementById('codeStatus').style.display = 'flex';
             
             try {
                 const res = await fetch(`/get_status/${smsState.id}`);
@@ -763,6 +823,7 @@
                 
                 if (data.success) {
                     if (data.has_code && data.code) {
+                        // Código recebido manualmente
                         smsState.code = data.code;
                         smsState.successes++;
                         
@@ -782,6 +843,7 @@
                         
                     } else if (data.status === 'waiting_code') {
                         if (!smsState.firstStatusCheck) {
+                            // Primeira tentativa: mostra "Nenhum" e cancela
                             document.getElementById('codeValue').textContent = 'Nenhum';
                             document.getElementById('codeStatus').textContent = 'Cancelando...';
                             
@@ -891,7 +953,7 @@
             if (digit2 > 9) digit2 = 0;
             cpf += digit2;
             
-            return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+            return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1$2$3$4');
         }
         
         function generateBirthdate() {
@@ -899,7 +961,7 @@
             const day = ('0' + date.getDate()).slice(-2);
             const month = ('0' + (date.getMonth() + 1)).slice(-2);
             const year = date.getFullYear();
-            return day + '/' + month + '/' + year;
+            return day + month + year;
         }
         
         function generateEmail(isNewGeneration = true) {
@@ -979,14 +1041,25 @@
             }
         }
         
-        function copyToClipboard(fieldId) {
+        function copyDataField(fieldId) {
             const field = document.getElementById(fieldId);
-            field.select();
-            navigator.clipboard.writeText(field.value).then(() => {
-                notify('Copiado!');
+            const text = field.value;
+            
+            if (!text || text === '-' || text === 'Clique em Gerar') {
+                notify('Nenhum dado para copiar', 'warning');
+                return;
+            }
+            
+            navigator.clipboard.writeText(text).then(() => {
+                notify('Dado copiado!');
             }).catch(() => {
+                const el = document.createElement('textarea');
+                el.value = text;
+                document.body.appendChild(el);
+                el.select();
                 document.execCommand('copy');
-                notify('Copiado!');
+                document.body.removeChild(el);
+                notify('Dado copiado!');
             });
         }
         
@@ -1170,6 +1243,19 @@ function addGiftToCollection(giftCode) {
         notify(`✓ ${gifts.length} gifts copiados!`);
     });
 }
+        function clearAllGifts() {
+            if (gifts.length === 0) {
+                notify('Nenhum gift para limpar', 'warning');
+                return;
+            }
+            
+            if (confirm(`Tem certeza que deseja limpar todos os ${gifts.length} gifts?`)) {
+                gifts = [];
+                localStorage.setItem('gifts', JSON.stringify(gifts));
+                updateGiftList();
+                notify('Todos os gifts foram removidos');
+            }
+        }
 
         // ================= INITIALIZATION =================
         function init() {
@@ -1192,24 +1278,6 @@ function addGiftToCollection(giftCode) {
             
             // Gifts
             updateGiftList();
-            
-            // Adicionar botão para copiar todos os gifts
-            const giftHeader = document.querySelector('.gift-section h3');
-            const copyAllBtn = document.createElement('button');
-            copyAllBtn.textContent = '📋';
-            copyAllBtn.style.cssText = `
-                background: #4f46e5;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 2px 8px;
-                font-size: 0.7rem;
-                cursor: pointer;
-                margin-left: 8px;
-            `;
-            copyAllBtn.title = 'Copiar todos os gifts';
-            copyAllBtn.onclick = copyAllGifts;
-            giftHeader.appendChild(copyAllBtn);
         }
 
         document.addEventListener('DOMContentLoaded', init);
