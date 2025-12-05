@@ -9,7 +9,7 @@
         
         body { 
             font-family: system-ui, -apple-system, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #cbd5e1 0%, #475569 100%);
             min-height: 100vh; 
             padding: 10px; 
         }
@@ -113,9 +113,9 @@
         
         .sms-section .counter {
             font-size: 0.7rem;
-            color: #4f46e5;
+            color: #475569;
             font-weight: 600;
-            background: #f5f3ff;
+            background: #f1f5f9;
             padding: 2px 6px;
             border-radius: 8px;
             position: absolute;
@@ -245,12 +245,12 @@
 }
 
 .action-btn.generate { 
-    background: #4f46e5; 
+    background: #64748b; 
     color: white; 
 }
 
 .action-btn.generate:hover {
-    background: #4338ca;
+    background: #475569;
 }
 
 .gender-btn.male { 
@@ -289,12 +289,12 @@
     display: flex;
     cursor: pointer;
     transition: all 0.2s;
-    background: #f5f3ff; /* fundo ROXO da sessão GIFTS */
+    background: #f8fafc; /* fundo ROXO da sessão GIFTS */
 }
 
 .data-field:hover {
-    border-color: #cbd5e1; /* igual ao hover do limpar */
-    background: #ede9fe; /* roxo levemente mais forte */
+    border-color: #e2e8f0; /* igual ao hover do limpar */
+    background: #f1f5f9; /* roxo levemente mais forte */
 }
 
 .data-input {
@@ -314,8 +314,8 @@
 
         /* Gift Section */
         .gift-section {
-            background: #f5f3ff;
-            border: 1px solid #ddd6fe;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
             border-radius: 8px;
             padding: 12px;
             margin: 10px 0;
@@ -324,7 +324,7 @@
         .gift-input {
             width: 100%;
             padding: 10px;
-            border: 1px solid #c4b5fd;
+            border: 1px solid #cbd5e1;
             border-radius: 6px;
             font-size: 0.9rem;
             margin-bottom: 8px;
@@ -333,14 +333,14 @@
         
         .gift-input:focus {
             outline: none;
-            border-color: #4f46e5;
+            border-color: #0ea5e9;
         }
         
         .gift-list {
-            max-height: 120px;
+            max-height: 60px;
             overflow-y: auto;
             background: white;
-            border: 1px solid #ddd6fe;
+            border: 1px solid #cbd5e1;
             border-radius: 6px;
             padding: 8px;
             margin-bottom: 8px;
@@ -348,15 +348,15 @@
         
         .gift-item {
             padding: 6px 8px;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #cbd5e1;
             font-size: 0.8rem;
-            color: #1e293b;
+            color: #64748b;
             cursor: pointer;
             transition: background 0.2s;
         }
         
         .gift-item:hover {
-            background: #f5f3ff;
+            background: #cbd5e1;
         }
         
         .gift-item:last-child {
@@ -377,7 +377,7 @@
         }
         
         .gift-footer-btn {
-            background: #4f46e5;
+            background: #cbd5e1;
             color: white;
             border: none;
             border-radius: 6px;
@@ -391,7 +391,7 @@
         
         .gift-count {
             font-weight: 700;
-            color: #5b21b6;
+            color: #64748b;
             font-size: 0.9rem;
         }
         
@@ -426,7 +426,7 @@
         
         .settings-btn {
             padding: 8px 12px;
-            background: #4f46e5;
+            background: #64748b;
             color: white;
             border: none;
             border-radius: 6px;
@@ -450,7 +450,7 @@
             position: fixed; 
             top: 15px; 
             right: 15px; 
-            background: #4f46e5;
+            background: #10b981;
             color: white; 
             padding: 8px 14px;
             border-radius: 6px; 
@@ -1133,7 +1133,6 @@ function addGiftToCollection(giftCode) {
     };
     
     gifts.unshift(gift);
-    if (gifts.length > 10) gifts = gifts.slice(0, 10);
     
     localStorage.setItem('gifts', JSON.stringify(gifts));
     updateGiftList();
@@ -1142,44 +1141,84 @@ function addGiftToCollection(giftCode) {
 }
 
         function updateGiftList() {
-            const giftList = document.getElementById('giftList');
-            const giftCount = document.getElementById('giftCount');
-            
-            giftCount.textContent = gifts.length;
-            
-            if (gifts.length === 0) {
-                giftList.innerHTML = '<div class="gift-item" style="color: #94a3b8; text-align: center; font-style: italic;">Nenhum gift adicionado ainda</div>';
-                return;
-            }
-            
-            giftList.innerHTML = '';
-            gifts.forEach((gift, index) => {
-                const item = document.createElement('div');
-                item.className = 'gift-item';
-                item.onclick = () => copySingleGift(gift);
-                
-                // Formata o email para mostrar apenas o +alias
-                const emailParts = gift.email.split('@');
-                const username = emailParts[0];
-                const plusIndex = username.indexOf('+');
-                const aliasPart = plusIndex !== -1 ? username.substring(plusIndex) : '';
-                
-                item.innerHTML = `
-                    <div style="font-weight: 600; color: #4f46e5; margin-bottom: 3px;">
-                        ${gift.code}
-                    </div>
-                    <div class="gift-info">
-                        <span title="${gift.number}">${gift.number.substring(0, 8)}...</span>
-                        <span title="${gift.email}">${aliasPart || gift.email.split('@')[0].substring(0, 6)}...</span>
-                        <span>${gift.timestamp}</span>
-                    </div>
-                `;
-                
-                // Dica de tooltip
-                item.title = `Número: ${gift.number}\nEmail: ${gift.email}\nClique para copiar este gift`;
-                giftList.appendChild(item);
-            });
-        }
+    const giftList = document.getElementById('giftList');
+    const giftCount = document.getElementById('giftCount');
+    
+    giftCount.textContent = gifts.length;
+    
+    if (gifts.length === 0) {
+        giftList.innerHTML = '<div class="gift-item" style="color: #475569; text-align: center; font-style: italic;">Nenhum gift adicionado ainda</div>';
+        return;
+    }
+    
+    giftList.innerHTML = '';
+    
+    // Mostra apenas os 3 mais recentes
+    const recentGifts = gifts.slice(0, 3); // Apenas 3 mais recentes para exibição
+    
+    recentGifts.forEach((gift, index) => {
+        const item = document.createElement('div');
+        item.className = 'gift-item';
+        item.onclick = () => copySingleGift(gift);
+        
+        // Formata o email para mostrar apenas o +alias
+        const emailParts = gift.email.split('@');
+        const username = emailParts[0];
+        const plusIndex = username.indexOf('+');
+        const aliasPart = plusIndex !== -1 ? username.substring(plusIndex) : '';
+        
+        item.innerHTML = `
+            <div style="font-weight: 600; color: #64748b; margin-bottom: 3px;">
+                ${gift.code}
+            </div>
+            <div class="gift-info">
+                <span title="${gift.number}">${gift.number.substring(0, 8)}...</span>
+                <span title="${gift.email}">${aliasPart || gift.email.split('@')[0].substring(0, 6)}...</span>
+                <span>${gift.timestamp}</span>
+            </div>
+        `;
+        
+        item.title = `Número: ${gift.number}\nEmail: ${gift.email}\nClique para copiar este gift`;
+        giftList.appendChild(item);
+    });
+    
+    // Se tiver mais de 3, mostra indicador
+    if (gifts.length > 3) {
+        const moreItem = document.createElement('div');
+        moreItem.className = 'gift-item';
+        moreItem.style.textAlign = 'center';
+        moreItem.style.color = '#64748b';
+        moreItem.style.fontStyle = 'italic';
+        moreItem.style.fontSize = '0.7rem';
+        moreItem.style.padding = '4px 8px';
+        moreItem.textContent = `... e mais ${gifts.length - 3} gifts (total: ${gifts.length})`;
+        moreItem.onclick = () => showAllGifts();
+        moreItem.title = 'Clique para ver detalhes';
+        giftList.appendChild(moreItem);
+    }
+}
+
+// Função opcional para mostrar todos os gifts em um modal ou alerta
+function showAllGifts() {
+    if (gifts.length === 0) return;
+    
+    let message = `=== TODOS OS GIFTS (${gifts.length}) ===\n\n`;
+    
+    gifts.forEach((gift, index) => {
+        message += `Gift #${index + 1}:\n`;
+        message += `Código: ${gift.code}\n`;
+        message += `Número: ${gift.number}\n`;
+        message += `Email: ${gift.email}\n`;
+        message += `Horário: ${gift.timestamp}\n`;
+        message += `\n`;
+    });
+    
+    // Mostra em um alert ou modal
+    alert(message);
+    
+    // Ou copia todos automaticamente
+    // copyAllGifts();
+}
 
         function copySingleGift(gift) {
             const text = `${gift.code}`;
