@@ -583,6 +583,8 @@
                     <button class="settings-btn" onclick="setBaseEmail()">Definir</button>
                 </div>
                 <button class="reset-btn" onclick="resetAlias()">Resetar Alias</button>
+                <button class="reset-btn" onclick="resetSMSStats()" style="margin-top: 8px; background: #64748b;">Resetar Tentativas/Sucessos</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1270,18 +1272,35 @@ function showAllGifts() {
     });
 }
         function clearAllGifts() {
-            if (gifts.length === 0) {
-                notify('Nenhum gift para limpar', 'warning');
-                return;
-            }
-            
-            if (confirm(`Tem certeza que deseja limpar todos os ${gifts.length} gifts?`)) {
-                gifts = [];
-                localStorage.setItem('gifts', JSON.stringify(gifts));
-                updateGiftList();
-                notify('Todos os gifts foram removidos');
-            }
-        }
+    if (gifts.length === 0) {
+        notify('Nenhum gift para limpar', 'warning');
+        return;
+    }
+    
+    // Limpa diretamente sem confirmação
+    const count = gifts.length;
+    gifts = [];
+    localStorage.setItem('gifts', JSON.stringify(gifts));
+    updateGiftList();
+    notify(`✓ ${count} gifts removidos`);
+}
+        
+        // ================= FUNÇÃO PARA RESETAR SMS STATS =================
+function resetSMSStats() {
+    // Reseta os valores
+    smsState.attempts = 0;
+    smsState.successes = 0;
+    
+    // Atualiza UI
+    document.getElementById('attempts').textContent = '0';
+    document.getElementById('successes').textContent = '0';
+    
+    // Salva
+    localStorage.setItem('sms_attempts', '0');
+    localStorage.setItem('sms_successes', '0');
+    
+    notify('✓ Contadores resetados');
+}
 
         // ================= INITIALIZATION =================
         function init() {
