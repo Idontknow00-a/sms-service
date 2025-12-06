@@ -398,7 +398,6 @@
         /* Settings Section */
         .settings-section {
             background: #f8fafc;
-            border: 1px solid #e2e8f0;
             border-radius: 8px;
             padding: 12px;
             margin-top: 5px;
@@ -584,7 +583,7 @@
                     <button class="settings-btn" onclick="setBaseEmail()">Definir</button>
                 </div>
                 <button class="reset-btn" onclick="resetAlias()">Resetar Alias</button>
-                <button class="reset-btn" onclick="resetSMSStats()" style="margin-top: 8px; background: #64748b;">Resetar Tentativas BOTSMS</button>
+                <button class="reset-btn" onclick="resetSMSStats()" style="margin-top: 8px; background: #64748b;">Resetar Tentativas/Sucessos</button>
                 </div>
             </div>
         </div>
@@ -596,51 +595,57 @@
     <script>
         // ================= SMS FUNCTIONS =================
         let smsState = {
-            id: localStorage.getItem('sms_id') || '',
-            number: localStorage.getItem('sms_number') || '',
-            price: localStorage.getItem('sms_price') || '',
-            code: localStorage.getItem('sms_code') || '',
-            attempts: parseInt(localStorage.getItem('sms_attempts') || '0'),
-            successes: parseInt(localStorage.getItem('sms_successes') || '0'),
-            loading: false,
-            firstStatusCheck: localStorage.getItem('sms_first_check') === 'true' || false,
-            autoCheckInterval: null
-        };
+    id: localStorage.getItem('sms_id') || '',
+    number: localStorage.getItem('sms_number') || '',
+    price: localStorage.getItem('sms_price') || '',
+    code: localStorage.getItem('sms_code') || '',
+    attempts: parseInt(localStorage.getItem('sms_attempts') || '0'),
+    successes: parseInt(localStorage.getItem('sms_successes') || '0'),
+    loading: false,
+    firstStatusCheck: localStorage.getItem('sms_first_check') === 'true' || false,
+    hasReceivedCode: localStorage.getItem('sms_hasReceivedCode') === 'true' || false, // NOVA FLAG
+    autoCheckInterval: null
+};
 
         function loadSmsState() {
-            if (smsState.number) {
-                document.getElementById('numberValue').textContent = smsState.number;
-                document.getElementById('numberBox').classList.remove('empty');
-                document.getElementById('numberPrice').textContent = smsState.price ? `$${smsState.price}` : '';
-                if (smsState.price) document.getElementById('numberBox').classList.add('active');
-            }
-            
-            if (smsState.code) {
-                document.getElementById('codeValue').textContent = smsState.code;
-                document.getElementById('codeBox').classList.remove('empty');
-                document.getElementById('codeBox').classList.add('active');
-                document.getElementById('codeStatus').textContent = 'Recebido';
-                document.querySelector('#codeBox .dot').classList.add('received');
-            }
-            
-            document.getElementById('attempts').textContent = smsState.attempts;
-            document.getElementById('successes').textContent = smsState.successes;
-            
-            // Inicia verificação automática se já tiver número
-            if (smsState.id) {
-                startAutoCodeCheck();
-            }
-        }
+    if (smsState.number) {
+        document.getElementById('numberValue').textContent = smsState.number;
+        document.getElementById('numberBox').classList.remove('empty');
+        document.getElementById('numberPrice').textContent = smsState.price ? `$${smsState.price}` : '';
+        if (smsState.price) document.getElementById('numberBox').classList.add('active');
+    }
+    
+    if (smsState.code) {
+        document.getElementById('codeValue').textContent = smsState.code;
+        document.getElementById('codeBox').classList.remove('empty');
+        document.getElementById('codeBox').classList.add('active');
+        document.getElementById('codeStatus').textContent = 'Recebido ✓';
+        document.querySelector('#codeBox .dot').classList.add('received');
+        // Marca que já recebeu código
+        smsState.hasReceivedCode = true;
+    }
+    
+    document.getElementById('attempts').textContent = smsState.attempts;
+    document.getElementById('successes').textContent = smsState.successes;
+    
+    // Carrega a flag do localStorage
+    smsState.hasReceivedCode = localStorage.getItem('sms_hasReceivedCode') === 'true' || false;
+    
+    if (smsState.id) {
+        startAutoCodeCheck();
+    }
+}
 
         function saveSmsState() {
-            localStorage.setItem('sms_id', smsState.id);
-            localStorage.setItem('sms_number', smsState.number);
-            localStorage.setItem('sms_price', smsState.price);
-            localStorage.setItem('sms_code', smsState.code);
-            localStorage.setItem('sms_attempts', smsState.attempts.toString());
-            localStorage.setItem('sms_successes', smsState.successes.toString());
-            localStorage.setItem('sms_first_check', smsState.firstStatusCheck.toString());
-        }
+    localStorage.setItem('sms_id', smsState.id);
+    localStorage.setItem('sms_number', smsState.number);
+    localStorage.setItem('sms_price', smsState.price);
+    localStorage.setItem('sms_code', smsState.code);
+    localStorage.setItem('sms_attempts', smsState.attempts.toString());
+    localStorage.setItem('sms_successes', smsState.successes.toString());
+    localStorage.setItem('sms_first_check', smsState.firstStatusCheck.toString());
+    localStorage.setItem('sms_hasReceivedCode', smsState.hasReceivedCode.toString());
+}
 
         function notify(msg, type = 'info') {
             const notif = document.getElementById('notification');
@@ -709,37 +714,36 @@
 
         // Função para verificar código automaticamente
         async function autoCheckCode() {
-            if (!smsState.id || smsState.loading) return;
+    if (!smsState.id || smsState.loading) return;
+    
+    try {
+        const response = await fetch(`/get_status/${smsState.id}`);
+        const data = await response.json();
+        
+        if (data.success && data.has_code && data.code) {
+            // Código recebido automaticamente!
+            smsState.code = data.code;
+            smsState.successes++;
             
-            try {
-                const response = await fetch(`/get_status/${smsState.id}`);
-                const data = await response.json();
-                
-                if (data.success && data.has_code && data.code) {
-                    // Código recebido automaticamente!
-                    smsState.code = data.code;
-                    smsState.successes++;
-                    
-                    document.getElementById('codeValue').textContent = smsState.code;
-                    document.getElementById('codeBox').classList.add('active');
-                    document.getElementById('codeStatus').textContent = 'Recebido';
-                    document.querySelector('#codeBox .dot').classList.add('received');
-                    document.getElementById('successes').textContent = smsState.successes;
-                    
-                    saveSmsState();
-                    
-                    // Copia automaticamente
-                    await copy(smsState.code, 'code');
-                    notify(`Código recebido automaticamente: ${smsState.code}`, 'info');
-                    
-                    // Continua verificando para novos códigos
-                    document.getElementById('codeStatus').textContent = 'Aguardando novo...';
-                    smsState.firstStatusCheck = false;
-                }
-            } catch (error) {
-                // Silencia erros no auto-check
-            }
+            document.getElementById('codeValue').textContent = smsState.code;
+            document.getElementById('codeBox').classList.add('active');
+            document.getElementById('codeStatus').textContent = 'Recebido ✓';
+            document.querySelector('#codeBox .dot').classList.add('received');
+            document.getElementById('successes').textContent = smsState.successes;
+            
+            saveSmsState();
+            
+            await copy(smsState.code, 'code');
+            notify(`Código recebido: ${smsState.code}`, 'info');
+            
+            // Marca que já recebeu código para não cancelar depois
+            smsState.hasReceivedCode = true;
+            saveSmsState();
         }
+    } catch (error) {
+        // Silencia erros
+    }
+}
 
         function startAutoCodeCheck() {
             if (smsState.autoCheckInterval) {
@@ -757,12 +761,13 @@
         }
 
         async function getNumber() {
-            if (smsState.loading) return;
-            
-            smsState.loading = true;
-            smsState.attempts++;
-            smsState.firstStatusCheck = false;
-            saveSmsState();
+    if (smsState.loading) return;
+    
+    smsState.loading = true;
+    smsState.attempts++;
+    smsState.firstStatusCheck = false;
+    smsState.hasReceivedCode = false; // RESETA ao obter novo número
+    saveSmsState();
             
             document.getElementById('attempts').textContent = smsState.attempts;
             document.getElementById('numberValue').textContent = '...';
@@ -827,77 +832,84 @@
         }
 
         async function getCode() {
-            if (!smsState.id || smsState.loading) {
-                if (!smsState.id) notify('Obtenha um número primeiro', 'error');
-                return;
-            }
-            
-            smsState.loading = true;
-            document.getElementById('codeValue').textContent = '...';
-            document.getElementById('codeStatus').textContent = 'Verificando';
-            document.getElementById('codeBox').classList.remove('empty');
-            
-            try {
-                const res = await fetch(`/get_status/${smsState.id}`);
-                const data = await res.json();
+    if (!smsState.id || smsState.loading) {
+        if (!smsState.id) notify('Obtenha um número primeiro', 'error');
+        return;
+    }
+    
+    smsState.loading = true;
+    document.getElementById('codeValue').textContent = '...';
+    document.getElementById('codeStatus').textContent = 'Verificando';
+    document.getElementById('codeBox').classList.remove('empty');
+    
+    try {
+        const res = await fetch(`/get_status/${smsState.id}`);
+        const data = await res.json();
+        
+        if (data.success) {
+            if (data.has_code && data.code) {
+                // Código recebido manualmente
+                smsState.code = data.code;
+                smsState.successes++;
                 
-                if (data.success) {
-                    if (data.has_code && data.code) {
-                        // Código recebido manualmente
-                        smsState.code = data.code;
-                        smsState.successes++;
-                        
-                        document.getElementById('codeValue').textContent = smsState.code;
-                        document.getElementById('codeBox').classList.add('active');
-                        document.getElementById('codeStatus').textContent = 'Recebido';
-                        document.querySelector('#codeBox .dot').classList.add('received');
-                        document.getElementById('successes').textContent = smsState.successes;
-                        
-                        saveSmsState();
-                        
-                        await copy(smsState.code, 'code');
-                        notify(`Código: ${smsState.code}`, 'info');
-                        
-                        document.getElementById('codeStatus').textContent = 'Aguardando novo...';
-                        smsState.firstStatusCheck = false;
-                        
-                    } else if (data.status === 'waiting_code') {
-                        if (!smsState.firstStatusCheck) {
-                            // Primeira tentativa: mostra "Nenhum" e cancela
-                            document.getElementById('codeValue').textContent = 'Nenhum';
-                            document.getElementById('codeStatus').textContent = 'Cancelando...';
-                            
-                            await copy('Nenhum', 'code');
-                            
-                            setTimeout(async () => {
-                                await cancelCurrentNumber();
-                            }, 500);
-                            
-                            smsState.firstStatusCheck = true;
-                            notify('Nenhum SMS recebido - Cancelando número', 'warning');
-                        } else {
-                            document.getElementById('codeValue').textContent = 'Aguardando...';
-                            document.getElementById('codeStatus').textContent = 'Verificando...';
-                            notify('Aguardando SMS...', 'info');
-                        }
-                        
-                    } else {
-                        document.getElementById('codeStatus').textContent = data.message || 'Status';
-                        notify(data.message || 'Status', 'info');
-                    }
-                } else {
-                    notify(data.message || 'Erro ao verificar', 'error');
-                    document.getElementById('codeStatus').textContent = 'Erro';
-                }
-            } catch (error) {
-                notify('Erro de conexão', 'error');
-                document.getElementById('codeStatus').textContent = 'Erro';
-            } finally {
-                smsState.loading = false;
-                smsState.firstStatusCheck = true;
+                document.getElementById('codeValue').textContent = smsState.code;
+                document.getElementById('codeBox').classList.add('active');
+                document.getElementById('codeStatus').textContent = 'Recebido ✓';
+                document.querySelector('#codeBox .dot').classList.add('received');
+                document.getElementById('successes').textContent = smsState.successes;
+                
                 saveSmsState();
+                
+                await copy(smsState.code, 'code');
+                notify(`Código: ${smsState.code}`, 'info');
+                
+                // Marca que já recebeu código
+                smsState.hasReceivedCode = true;
+                saveSmsState();
+                
+            } else if (data.status === 'waiting_code') {
+                // Verifica se é o primeiro check manual
+                if (!smsState.firstStatusCheck) {
+                    // PRIMEIRO CHECK MANUAL - mostra "Nenhum" e cancela
+                    document.getElementById('codeValue').textContent = 'Nenhum';
+                    document.getElementById('codeStatus').textContent = 'Cancelando...';
+                    
+                    await copy('Nenhum', 'code');
+                    
+                    // Só cancela se NUNCA recebeu código
+                    if (!smsState.hasReceivedCode) {
+                        setTimeout(async () => {
+                            await cancelCurrentNumber();
+                        }, 500);
+                    }
+                    
+                    smsState.firstStatusCheck = true;
+                    notify('Nenhum SMS recebido - Cancelando número', 'warning');
+                    
+                } else {
+                    // Já fez primeiro check, apenas verifica
+                    document.getElementById('codeValue').textContent = smsState.code || 'Aguardando...';
+                    document.getElementById('codeStatus').textContent = 'Verificando...';
+                    notify('Aguardando SMS...', 'info');
+                }
+                
+            } else {
+                document.getElementById('codeStatus').textContent = data.message || 'Status';
+                notify(data.message || 'Status', 'info');
             }
+        } else {
+            notify(data.message || 'Erro ao verificar', 'error');
+            document.getElementById('codeStatus').textContent = 'Erro';
         }
+    } catch (error) {
+        notify('Erro de conexão', 'error');
+        document.getElementById('codeStatus').textContent = 'Erro';
+    } finally {
+        smsState.loading = false;
+        smsState.firstStatusCheck = true;
+        saveSmsState();
+    }
+}
 
         // ================= DATA GENERATOR FUNCTIONS =================
         const maleNames = ["Abelardo", "Adriano", "Agnaldo", "Alan"];
