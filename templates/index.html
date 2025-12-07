@@ -724,6 +724,8 @@
             // Código recebido automaticamente!
             smsState.code = data.code;
             smsState.successes++;
+            smsState.hasReceivedCode = true;
+            smsState.firstStatusCheck = true; // MARCA QUE JÁ FEZ CHECK
             
             document.getElementById('codeValue').textContent = smsState.code;
             document.getElementById('codeBox').classList.add('active');
@@ -735,10 +737,6 @@
             
             await copy(smsState.code, 'code');
             notify(`Código recebido: ${smsState.code}`, 'info');
-            
-            // Marca que já recebeu código para não cancelar depois
-            smsState.hasReceivedCode = true;
-            saveSmsState();
         }
     } catch (error) {
         // Silencia erros
@@ -851,6 +849,8 @@
                 // Código recebido manualmente
                 smsState.code = data.code;
                 smsState.successes++;
+                smsState.hasReceivedCode = true; // MARCA QUE RECEBEU CÓDIGO
+                smsState.firstStatusCheck = true; // MARCA QUE JÁ FEZ CHECK
                 
                 document.getElementById('codeValue').textContent = smsState.code;
                 document.getElementById('codeBox').classList.add('active');
@@ -863,14 +863,20 @@
                 await copy(smsState.code, 'code');
                 notify(`Código: ${smsState.code}`, 'info');
                 
-                // Marca que já recebeu código
-                smsState.hasReceivedCode = true;
-                saveSmsState();
-                
             } else if (data.status === 'waiting_code') {
-                // Verifica se é o primeiro check manual
-                if (!smsState.firstStatusCheck) {
-                    // PRIMEIRO CHECK MANUAL - mostra "Nenhum" e cancela
+                // Verifica se JÁ TEM CÓDIGO SALVO (chegou automaticamente)
+                if (smsState.code && smsState.hasReceivedCode) {
+                    // Já tem código, copia o código atual
+                    document.getElementById('codeValue').textContent = smsState.code;
+                    document.getElementById('codeStatus').textContent = 'Recebido ✓';
+                    
+                    await copy(smsState.code, 'code');
+                    notify(`Código atual: ${smsState.code}`, 'info');
+                    
+                    smsState.firstStatusCheck = true; // Marca que já fez check
+                    
+                } else if (!smsState.firstStatusCheck) {
+                    // PRIMEIRO CHECK MANUAL sem código ainda
                     document.getElementById('codeValue').textContent = 'Nenhum';
                     document.getElementById('codeStatus').textContent = 'Cancelando...';
                     
@@ -895,18 +901,20 @@
                 
             } else {
                 document.getElementById('codeStatus').textContent = data.message || 'Status';
+                document.getElementById('codeValue').textContent = smsState.code || '...';
                 notify(data.message || 'Status', 'info');
             }
         } else {
             notify(data.message || 'Erro ao verificar', 'error');
             document.getElementById('codeStatus').textContent = 'Erro';
+            document.getElementById('codeValue').textContent = smsState.code || 'Erro';
         }
     } catch (error) {
         notify('Erro de conexão', 'error');
         document.getElementById('codeStatus').textContent = 'Erro';
+        document.getElementById('codeValue').textContent = smsState.code || 'Erro';
     } finally {
         smsState.loading = false;
-        smsState.firstStatusCheck = true;
         saveSmsState();
     }
 }
