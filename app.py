@@ -1,4 +1,3 @@
-
 from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 import requests
@@ -14,7 +13,7 @@ CORS(app)
 API_KEY = '8f0d024fA7f44b1efd86AAe1180f5590'
 COUNTRY_CODE = 73  # Brasil
 SERVICE = 'mm'
-TIMEOUT_DURATION = 50  # segundos
+TIMEOUT_DURATION = 120  # segundos
 
 # Armazenamento em memória
 number_timeouts = {}
