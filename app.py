@@ -2,7 +2,7 @@ from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 import requests
 import time
-from threading import Timer
+from threading import Timer, Thread
 import logging
 import os
 
@@ -20,12 +20,6 @@ number_timeouts = {}
 active_numbers = {}
 successful_numbers = set()
 
-# Cache de preços
-price_cache = {
-    'time': 0,
-    'prices': {}
-}
-
 # Configurar logging
 logging.basicConfig(
     level=logging.INFO,
@@ -37,90 +31,37 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://hero-sms.com/stubs/handler_api.php"
 
 
-def get_balance():
-    """Obtém o saldo da conta"""
+def get_service_price_async(number_id):
+    """Obtém o preço do serviço em background (não bloqueia)"""
     try:
-        url = f"{BASE_URL}?api_key={API_KEY}&action=getBalance"
-        response = requests.get(url, timeout=10)
-        
-        if response.status_code == 200:
-            data = response.text.strip()
-            if data.startswith('ACCESS_BALANCE:'):
-                balance = float(data.split(':')[1])
-                return balance
-        return 0.0
-    except Exception as e:
-        logger.error(f"Erro ao obter saldo: {e}")
-        return 0.0
-
-
-def get_service_price():
-    """Obtém o preço do serviço - VERSÃO COM CACHE"""
-    try:
-        # Verifica cache (válido por 30 segundos)
-        current_time = time.time()
-        if current_time - price_cache['time'] < 30 and SERVICE in price_cache['prices']:
-            return price_cache['prices'][SERVICE]
-        
-        # URL para preços da HeroSMS
         url = f"{BASE_URL}?api_key={API_KEY}&action=getPrices"
         response = requests.get(url, timeout=10)
         
         if response.status_code == 200:
             data = response.json()
             
-            # Tenta extrair preço
-            price = extract_price_from_response(data)
-            
-            if price > 0:
-                # Atualiza cache
-                price_cache['time'] = current_time
-                price_cache['prices'][SERVICE] = price
-                logger.info(f"💰 Preço do serviço {SERVICE}: ${price:.4f}")
-                return price
-        
-        return 0.0
-        
-    except Exception as e:
-        logger.error(f"Erro ao obter preço: {e}")
-        return 0.0
-
-
-def extract_price_from_response(data):
-    """Extrai preço da resposta da API"""
-    try:
-        # Estrutura: country->service->cost
-        if isinstance(data, dict):
+            # Tenta extrair o preço
             if str(COUNTRY_CODE) in data and SERVICE in data[str(COUNTRY_CODE)]:
                 service_info = data[str(COUNTRY_CODE)][SERVICE]
                 if "cost" in service_info:
-                    return float(service_info["cost"])
-            
-            # Verifica se tem o serviço como chave direta
-            if SERVICE in data and isinstance(data[SERVICE], dict):
-                if "cost" in data[SERVICE]:
-                    return float(data[SERVICE]["cost"])
-        
-        # Estrutura de lista
-        if isinstance(data, list) and len(data) > 0:
-            for item in data:
-                if SERVICE in item and isinstance(item[SERVICE], dict):
-                    if "cost" in item[SERVICE]:
-                        return float(item[SERVICE]["cost"])
-            
+                    price = float(service_info["cost"])
+                    formatted_price = f"{price:.4f}"
+                    
+                    # Atualiza o preço do número ativo
+                    if number_id in active_numbers:
+                        active_numbers[number_id]['price'] = formatted_price
+                        logger.info(f"💰 Preço atualizado para {number_id}: ${formatted_price}")
+                    
+                    return formatted_price
     except Exception as e:
-        logger.error(f"Erro ao extrair preço: {e}")
+        logger.error(f"Erro ao obter preço em background: {e}")
     
-    return 0.0
+    return "0.0000"
 
 
 def get_number():
-    """Obtém um número - VERSÃO OTIMIZADA"""
+    """Obtém um número DIRETO - sem verificações prévias"""
     try:
-        # Obtém preço do cache (rápido)
-        service_price = get_service_price()
-        
-        # Obtém número diretamente (1 requisição apenas)
         url = f"{BASE_URL}?api_key={API_KEY}&action=getNumber&service={SERVICE}&country={COUNTRY_CODE}"
         response = requests.get(url, timeout=10)
         
@@ -128,15 +69,17 @@ def get_number():
             data = response.text.strip()
             
             if data.startswith('ACCESS_NUMBER'):
-                formatted_price = f"{service_price:.4f}"
-                logger.info(f"✓ Número obtido por ${formatted_price}")
-                return data, formatted_price
+                logger.info(f"✓ Número obtido com sucesso")
+                return data, "..."  # Placeholder - será atualizado em background
             elif 'NO_NUMBERS' in data:
                 logger.info("✗ Sem números disponíveis")
                 return 'NO_NUMBERS', "0.0000"
             elif 'NO_BALANCE' in data:
-                logger.error("✗ Saldo insuficiente na API!")
+                logger.error("✗ Saldo insuficiente!")
                 return 'NO_BALANCE', "0.0000"
+            elif 'BAD_KEY' in data:
+                logger.error("✗ API Key inválida!")
+                return 'BAD_KEY', "0.0000"
             else:
                 logger.warning(f"Resposta inesperada: {data}")
                 return data, "0.0000"
@@ -179,20 +122,9 @@ def index():
 
 @app.route('/get_number', methods=['GET'])
 def get_number_route():
-    """Obtém novo número - VERSÃO OTIMIZADA (apenas 2 requisições)"""
+    """Obtém novo número DIRETO - preço atualizado em background"""
     try:
-        # 1. Verificar saldo rapidamente
-        balance = get_balance()
-        logger.info(f"💰 Saldo: ${balance:.4f}")
-        
-        if balance < 0.01:
-            return jsonify({
-                'success': False,
-                'response': 'NO_BALANCE',
-                'message': 'Saldo insuficiente!'
-            })
-
-        # 2. Obter número (já retorna com preço do cache)
+        # Compra direto - 1 REQUISIÇÃO APENAS!
         data, price = get_number()
         
         if data.startswith('ACCESS_NUMBER'):
@@ -207,6 +139,10 @@ def get_number_route():
                 'created_at': time.time(),
                 'received_codes': []
             }
+            
+            # Busca o preço em background (não bloqueia)
+            Thread(target=get_service_price_async, args=(number_id,), daemon=True).start()
+            
             logger.info(f"✅ Número {phone_number} obtido (ID: {number_id})")
             return jsonify({
                 'success': True,
@@ -220,7 +156,8 @@ def get_number_route():
             msg_map = {
                 'NO_BALANCE': 'Saldo insuficiente!',
                 'NO_NUMBERS': 'Sem números disponíveis',
-                'NO_NUMBER': 'Falha ao obter número'
+                'NO_NUMBER': 'Falha ao obter número',
+                'BAD_KEY': 'API Key inválida'
             }
             return jsonify({
                 'success': False,
@@ -230,6 +167,27 @@ def get_number_route():
     except Exception as e:
         logger.error(f"Erro em /get_number: {e}")
         return jsonify({'success': False, 'message': f'Erro interno: {str(e)}'}), 500
+
+
+@app.route('/get_price/<number_id>', methods=['GET'])
+def get_price(number_id):
+    """Retorna o preço atualizado de um número específico"""
+    try:
+        if number_id in active_numbers:
+            price = active_numbers[number_id].get('price', '0.0000')
+            return jsonify({
+                'success': True,
+                'number_id': number_id,
+                'price': price
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Número não encontrado'
+            })
+    except Exception as e:
+        logger.error(f"Erro em /get_price: {e}")
+        return jsonify({'success': False, 'message': f'Erro: {str(e)}'}), 500
 
 
 @app.route('/get_status/<number_id>', methods=['GET'])
@@ -362,6 +320,6 @@ if __name__ == '__main__':
     logger.info("🚀 Servidor SMS iniciado (HeroSMS)")
     logger.info("📞 Números brasileiros (73) - Serviço: mm")
     logger.info("⏰ Timeout: 50s")
-    logger.info("💵 Preço com cache de 30s")
+    logger.info("⚡ Compra direta - Preço atualizado em background!")
     print("\n" + "="*50)
     app.run(debug=True, port=3000, host='0.0.0.0')
