@@ -1,3 +1,4 @@
+
 from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 import requests
@@ -13,12 +14,18 @@ CORS(app)
 API_KEY = '8f0d024fA7f44b1efd86AAe1180f5590'
 COUNTRY_CODE = 73  # Brasil
 SERVICE = 'mm'
-TIMEOUT_DURATION = 120  # segundos
+TIMEOUT_DURATION = 50  # segundos
 
 # Armazenamento em memória
 number_timeouts = {}
 active_numbers = {}
-successful_numbers = set()  # Números que já receberam pelo menos um código
+successful_numbers = set()
+
+# Cache de preços
+price_cache = {
+    'time': 0,
+    'prices': {}
+}
 
 # Configurar logging
 logging.basicConfig(
@@ -31,50 +38,115 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://hero-sms.com/stubs/handler_api.php"
 
 
-def get_number_price():
-    """Obtém o preço único para o serviço no país"""
+def get_balance():
+    """Obtém o saldo da conta"""
     try:
+        url = f"{BASE_URL}?api_key={API_KEY}&action=getBalance"
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.text.strip()
+            if data.startswith('ACCESS_BALANCE:'):
+                balance = float(data.split(':')[1])
+                return balance
+        return 0.0
+    except Exception as e:
+        logger.error(f"Erro ao obter saldo: {e}")
+        return 0.0
+
+
+def get_service_price():
+    """Obtém o preço do serviço - VERSÃO COM CACHE"""
+    try:
+        # Verifica cache (válido por 30 segundos)
+        current_time = time.time()
+        if current_time - price_cache['time'] < 30 and SERVICE in price_cache['prices']:
+            return price_cache['prices'][SERVICE]
+        
+        # URL para preços da HeroSMS
         url = f"{BASE_URL}?api_key={API_KEY}&action=getPrices"
         response = requests.get(url, timeout=10)
+        
         if response.status_code == 200:
-            prices_data = response.json()
-            if str(COUNTRY_CODE) in prices_data and SERVICE in prices_data[str(COUNTRY_CODE)]:
-                cost = prices_data[str(COUNTRY_CODE)][SERVICE]['cost']
-                return float(cost)
+            data = response.json()
+            
+            # Tenta extrair preço
+            price = extract_price_from_response(data)
+            
+            if price > 0:
+                # Atualiza cache
+                price_cache['time'] = current_time
+                price_cache['prices'][SERVICE] = price
+                logger.info(f"💰 Preço do serviço {SERVICE}: ${price:.4f}")
+                return price
+        
+        return 0.0
+        
     except Exception as e:
         logger.error(f"Erro ao obter preço: {e}")
-    return None
+        return 0.0
+
+
+def extract_price_from_response(data):
+    """Extrai preço da resposta da API"""
+    try:
+        # Estrutura: country->service->cost
+        if isinstance(data, dict):
+            if str(COUNTRY_CODE) in data and SERVICE in data[str(COUNTRY_CODE)]:
+                service_info = data[str(COUNTRY_CODE)][SERVICE]
+                if "cost" in service_info:
+                    return float(service_info["cost"])
+            
+            # Verifica se tem o serviço como chave direta
+            if SERVICE in data and isinstance(data[SERVICE], dict):
+                if "cost" in data[SERVICE]:
+                    return float(data[SERVICE]["cost"])
+        
+        # Estrutura de lista
+        if isinstance(data, list) and len(data) > 0:
+            for item in data:
+                if SERVICE in item and isinstance(item[SERVICE], dict):
+                    if "cost" in item[SERVICE]:
+                        return float(item[SERVICE]["cost"])
+            
+    except Exception as e:
+        logger.error(f"Erro ao extrair preço: {e}")
+    
+    return 0.0
 
 
 def get_number():
-    """Obtém um número SEM especificar preço (HeroSMS usa preço fixo)"""
+    """Obtém um número - VERSÃO OTIMIZADA"""
     try:
+        # Obtém preço do cache (rápido)
+        service_price = get_service_price()
+        
+        # Obtém número diretamente (1 requisição apenas)
         url = f"{BASE_URL}?api_key={API_KEY}&action=getNumber&service={SERVICE}&country={COUNTRY_CODE}"
         response = requests.get(url, timeout=10)
+        
         if response.status_code == 200:
             data = response.text.strip()
+            
             if data.startswith('ACCESS_NUMBER'):
-                parts = data.split(':', 2)
-                if len(parts) >= 3:
-                    number_id = parts[1].strip()
-                    phone_number = parts[2].strip().replace('55', '', 1)
-                    price = get_number_price() or 0.0
-                    formatted_price = f"{price:.4f}"
-                    logger.info(f"✓ Número comprado por ${formatted_price}")
-                    return data, formatted_price
-            elif 'NO_BALANCE' in data:
-                logger.error("✗ Saldo insuficiente!")
-                return 'NO_BALANCE', "0.0000"
+                formatted_price = f"{service_price:.4f}"
+                logger.info(f"✓ Número obtido por ${formatted_price}")
+                return data, formatted_price
             elif 'NO_NUMBERS' in data:
                 logger.info("✗ Sem números disponíveis")
                 return 'NO_NUMBERS', "0.0000"
+            elif 'NO_BALANCE' in data:
+                logger.error("✗ Saldo insuficiente na API!")
+                return 'NO_BALANCE', "0.0000"
             else:
                 logger.warning(f"Resposta inesperada: {data}")
-        else:
-            logger.error(f"Erro HTTP {response.status_code} ao obter número")
+                return data, "0.0000"
+        
+        return 'NO_NUMBER', "0.0000"
+        
     except Exception as e:
         logger.error(f"Erro ao obter número: {e}")
-    return 'NO_NUMBER', "0.0000"
+        return 'NO_NUMBER', "0.0000"
 
 
 def cancel_number_automatically(number_id):
@@ -92,9 +164,7 @@ def cancel_number_automatically(number_id):
 
 
 def setup_timeout(number_id):
-    """Configura timeout para cancelamento automático (só se NUNCA recebeu código)"""
-    # NOTA: não vamos cancelar automaticamente se já recebeu código!
-    # Mas mantemos por compatibilidade com UX atual (reset manual é melhor)
+    """Configura timeout para cancelamento automático"""
     timer = Timer(TIMEOUT_DURATION, lambda: cancel_number_automatically(number_id))
     timer.start()
     number_timeouts[number_id] = timer
@@ -110,34 +180,22 @@ def index():
 
 @app.route('/get_number', methods=['GET'])
 def get_number_route():
-    """Obtém novo número (verifica saldo antes)"""
+    """Obtém novo número - VERSÃO OTIMIZADA (apenas 2 requisições)"""
     try:
-        # Verificar saldo
-        balance_url = f"{BASE_URL}?api_key={API_KEY}&action=getBalance"
-        balance_resp = requests.get(balance_url, timeout=5)
-        if balance_resp.status_code == 200:
-            balance_text = balance_resp.text.strip()
-            if balance_text.startswith('ACCESS_BALANCE:'):
-                balance = float(balance_text.split(':')[1])
-                logger.info(f"💰 Saldo: ${balance:.4f}")
-                if balance < 0.01:
-                    return jsonify({
-                        'success': False,
-                        'response': 'NO_BALANCE',
-                        'message': 'Saldo insuficiente!'
-                    })
-            elif 'BAD_KEY' in balance_text:
-                logger.error("✗ Chave de API inválida")
-                return jsonify({
-                    'success': False,
-                    'response': 'BAD_KEY',
-                    'message': 'API key inválida'
-                })
-        else:
-            logger.warning("Não foi possível verificar saldo — continuando...")
+        # 1. Verificar saldo rapidamente
+        balance = get_balance()
+        logger.info(f"💰 Saldo: ${balance:.4f}")
+        
+        if balance < 0.01:
+            return jsonify({
+                'success': False,
+                'response': 'NO_BALANCE',
+                'message': 'Saldo insuficiente!'
+            })
 
-        # Obter número
+        # 2. Obter número (já retorna com preço do cache)
         data, price = get_number()
+        
         if data.startswith('ACCESS_NUMBER'):
             parts = data.split(':', 2)
             number_id = parts[1].strip()
@@ -203,7 +261,7 @@ def get_status(number_id):
                 if code in received_codes:
                     logger.info(f"ℹ️ Código {code} já foi recebido anteriormente para {number_id}")
                     result.update({
-                        'has_code': False,  # NÃO notificar o frontend
+                        'has_code': False,
                         'code': None,
                         'status': 'waiting_new_code',
                         'message': 'Aguardando novo código...'
@@ -211,12 +269,10 @@ def get_status(number_id):
                     return jsonify(result)
 
             # CÓDIGO NOVO - processar normalmente
-            # Cancelar timeout ao receber o primeiro código
             if number_id in number_timeouts:
                 number_timeouts[number_id].cancel()
                 del number_timeouts[number_id]
 
-            # Marcar como sucesso (só na primeira vez)
             if number_id not in successful_numbers:
                 successful_numbers.add(number_id)
                 logger.info(f"✅ Primeiro código recebido para {number_id}")
@@ -227,7 +283,7 @@ def get_status(number_id):
                 active_numbers[number_id]['last_code'] = code
                 active_numbers[number_id]['status'] = 'code_received'
 
-            # IMPORTANTE: pedir novo SMS (setStatus=3) para múltiplos códigos
+            # Pedir novo SMS
             try:
                 retry_url = f"{BASE_URL}?api_key={API_KEY}&action=setStatus&status=3&id={number_id}"
                 retry_resp = requests.get(retry_url, timeout=5)
@@ -306,7 +362,7 @@ def get_stats():
 if __name__ == '__main__':
     logger.info("🚀 Servidor SMS iniciado (HeroSMS)")
     logger.info("📞 Números brasileiros (73) - Serviço: mm")
-    logger.info("⏰ Timeout: 50s (cancela somente se NUNCA recebeu código)")
-    logger.info("💵 Preço fixo via getPrices")
+    logger.info("⏰ Timeout: 50s")
+    logger.info("💵 Preço com cache de 30s")
     print("\n" + "="*50)
     app.run(debug=True, port=3000, host='0.0.0.0')
