@@ -10,7 +10,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configuração
-API_KEY = '8f0d024fA7f44b1efd86AAe1180f5590'
+API_KEY = os.environ.get('API_KEY_SMS', '')
 COUNTRY_CODE = 73  # Brasil
 SERVICE = 'mm'
 TIMEOUT_DURATION = 120  # segundos
